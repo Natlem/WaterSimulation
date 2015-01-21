@@ -33,19 +33,27 @@ struct Vertex
 class Control
 {
     public:
+        Control(int widthPixel, int heightPixel) : widthPixel(widthPixel), heightPixel(heightPixel){};
         void computeMVP();
         glm::mat4 getProjMatrix();
         glm::mat4 getViewMatrix();
         glm::mat4 getModMatrix();
+        glm::mat4 getMVP();
     private:
-        glm::mat4 proj;
-        glm::mat4 view;
-        glm::mat4 mod;
+        int widthPixel;
+        int heightPixel;
+        glm::mat4 proj = glm::perspective(45.0f, 4.0f / 3.0f, 0.1f, 100.0f);
+        glm::mat4 view = glm::lookAt(
+                    glm::vec3(14, 10, 3),
+                    glm::vec3(10, 0, 0),
+                    glm::vec3(0, 1, 0)
+                    );
+        glm::mat4 mod = glm::mat4(1.0f);
         glm::vec3 position = glm::vec3(14, 10, 3);
         // Initial horizontal angle : toward -Z
         float horizontalAngle = 3.14f;
         // Initial vertical angle : none
-        float verticalAngle = 0.0f;
+        float verticalAngle = 3.14f;
         // Initial Field of View
         float initialFoV = 45.0f;
 

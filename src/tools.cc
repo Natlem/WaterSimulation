@@ -85,3 +85,8 @@ glm::mat4 Control::getModMatrix()
 {
     return mod;
 }
+
+glm::mat4 Control::getMVP()
+{
+    return proj * view * mod;
+}

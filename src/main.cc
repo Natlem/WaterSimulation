@@ -6,6 +6,10 @@
 #include <glfw3.h>
 
 GLFWwindow* window;
+GLfloat waveTime = 0.5f;
+GLfloat waveWidth = 0.6f;
+GLfloat waveHeight = 1.0f;
+GLfloat waveFreq = 0.01f;
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -17,11 +21,11 @@ GLFWwindow* window;
 #include <iostream>
 #include "tools.hh"
 
-#define WIDTH_MESH 10
-#define HEIGHT_MESH 10
+#define WIDTH_MESH 20
+#define HEIGHT_MESH 20
 
-#define WINDOWS_WIDTH 800
-#define WINDOWS_HEIGHT 600
+#define WINDOWS_WIDTH 1300
+#define WINDOWS_HEIGHT 700
 
 
 
@@ -45,6 +49,9 @@ std::vector<GLuint> bindBuffers(const std::vector<unsigned short>& indices, cons
 
     GLuint shaderID = LoadShaders("vertexS", "fragmentS");
     GLuint matrixID = glGetUniformLocation(shaderID, "MVP");
+    GLuint waveTimeID = glGetUniformLocation(shaderID, "waveTime");
+    GLuint waveWidthID = glGetUniformLocation(shaderID, "waveWidth");
+    GLuint waveHeightID = glGetUniformLocation(shaderID, "waveHeight");
 
     std::vector<GLuint> res;
     res.push_back(VertexArrayID); // 0
@@ -52,6 +59,9 @@ std::vector<GLuint> bindBuffers(const std::vector<unsigned short>& indices, cons
     res.push_back(indexBuffer); // 2
     res.push_back(shaderID); // 3
     res.push_back(matrixID); // 4
+    res.push_back(waveTimeID); // 5
+    res.push_back(waveWidthID); // 6
+    res.push_back(waveHeightID); // 7
     
     //Always this order
 
@@ -146,12 +156,17 @@ void initWindow()
 
 void renderScene(std::vector<GLuint> ids, glm::mat4& MVP, Control& ctrl, const std::vector<unsigned short>& indices)
 {
+
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glUseProgram(ids[3]);
     MVP = ctrl.getMVP();
     ctrl.computeMVP();
 
     glUniformMatrix4fv(ids[4], 1, GL_FALSE, &MVP[0][0]);
+    glUniform1f(ids[5], waveTime);
+    glUniform1f(ids[6], waveWidth);
+    glUniform1f(ids[7], waveHeight);
+
     glEnable(GL_PRIMITIVE_RESTART);
     glPrimitiveRestartIndex(WIDTH_MESH *HEIGHT_MESH);
     glEnableVertexAttribArray(0);
@@ -167,7 +182,7 @@ void renderScene(std::vector<GLuint> ids, glm::mat4& MVP, Control& ctrl, const s
         (void*)0
         );
     //glDrawArrays(GL_TRIANGLE_STRIP, 0, vertexDatas.size() / 3);
-    glDrawElements(GL_TRIANGLE_STRIP, indices.size(), GL_UNSIGNED_SHORT, (void*)0);
+    glDrawElements(GL_TRIANGLE_STRIP, static_cast<int>(indices.size()), GL_UNSIGNED_SHORT, (void*)0);
     glDisableVertexAttribArray(0);
     glfwSwapBuffers(window);
     glfwPollEvents();
@@ -195,10 +210,11 @@ int main()
     do
     {   
         renderScene(ids, MVP, ctrl, indices);
+        waveTime += waveFreq;
     } while (glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS && glfwWindowShouldClose(window) == 0);
 
     glDeleteBuffers(1, &ids[1]);
     glDeleteProgram(ids[3]);
-
+    
     return 0;
 }
