@@ -20,6 +20,44 @@ GLFWwindow* window;
 #define WIDTH_MESH 10
 #define HEIGHT_MESH 10
 
+#define WINDOWS_WIDTH 800
+#define WINDOWS_HEIGHT 600
+
+
+
+std::vector<GLuint> bindBuffers(const std::vector<unsigned short>& indices, const std::vector<float>& vertexDatas)
+{
+    GLuint VertexArrayID;
+    glGenVertexArrays(1, &VertexArrayID);
+    glBindVertexArray(VertexArrayID);
+
+
+    GLuint vertexBuffer;
+
+    glGenBuffers(1, &vertexBuffer);
+    glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
+    glBufferData(GL_ARRAY_BUFFER, WIDTH_MESH * HEIGHT_MESH * 3 * sizeof(float), &vertexDatas[0], GL_STATIC_DRAW);
+
+    GLuint indexBuffer;
+    glGenBuffers(1, &indexBuffer);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned short), &indices[0], GL_STATIC_DRAW);
+
+    GLuint shaderID = LoadShaders("vertexS", "fragmentS");
+    GLuint matrixID = glGetUniformLocation(shaderID, "MVP");
+
+    std::vector<GLuint> res;
+    res.push_back(VertexArrayID); // 0
+    res.push_back(vertexBuffer); // 1
+    res.push_back(indexBuffer); // 2
+    res.push_back(shaderID); // 3
+    res.push_back(matrixID); // 4
+    
+    //Always this order
+
+    return res;
+}
+
 std::vector<float> convertToArray(const std::vector<Vertex>& v)
 {
     std::vector<float> res;
@@ -84,6 +122,57 @@ std::vector<float> generateQuads(int number, std::vector<unsigned short>& indice
     return convertToArray(vertexs);
 }
 
+void initWindow()
+{
+    glfwWindowHint(GLFW_SAMPLES, 4);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
+    window = glfwCreateWindow(WINDOWS_WIDTH, WINDOWS_HEIGHT, "Water Simulation", NULL, NULL);
+    if (window == NULL)
+        exit(-1);
+
+    glfwMakeContextCurrent(window);
+    glewExperimental = true;
+    if (glewInit() != GLEW_OK) {
+        fprintf(stderr, "Failed to initialize GLEW\n");
+        exit(-1);
+    }
+
+    glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
+    glClearColor(0, 0, 0, 0);
+}
+
+void renderScene(std::vector<GLuint> ids, glm::mat4& MVP, Control& ctrl, const std::vector<unsigned short>& indices)
+{
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glUseProgram(ids[3]);
+    MVP = ctrl.getMVP();
+    ctrl.computeMVP();
+
+    glUniformMatrix4fv(ids[4], 1, GL_FALSE, &MVP[0][0]);
+    glEnable(GL_PRIMITIVE_RESTART);
+    glPrimitiveRestartIndex(WIDTH_MESH *HEIGHT_MESH);
+    glEnableVertexAttribArray(0);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    glBindBuffer(GL_ARRAY_BUFFER, ids[1]);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ids[2]);
+    glVertexAttribPointer(
+        0,
+        3,
+        GL_FLOAT,
+        GL_FALSE,
+        0,
+        (void*)0
+        );
+    //glDrawArrays(GL_TRIANGLE_STRIP, 0, vertexDatas.size() / 3);
+    glDrawElements(GL_TRIANGLE_STRIP, indices.size(), GL_UNSIGNED_SHORT, (void*)0);
+    glDisableVertexAttribArray(0);
+    glfwSwapBuffers(window);
+    glfwPollEvents();
+}
+
 int main()
 {
     // TODO : Generate vertex in generate(),
@@ -92,91 +181,24 @@ int main()
     if (!glfwInit())
         return -1;
 
-    glfwWindowHint(GLFW_SAMPLES, 4);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
-    window = glfwCreateWindow(800, 600, "Water Simulation", NULL, NULL);
-    if (window == NULL)
-        return -1;
-
-    glfwMakeContextCurrent(window);
-    glewExperimental = true;
-    if (glewInit() != GLEW_OK) {
-        fprintf(stderr, "Failed to initialize GLEW\n");
-        return -1;
-    }
-
-
-    glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
-    glClearColor(0, 0, 0, 0);
-
-
-    GLuint VertexArrayID;
-    glGenVertexArrays(1, &VertexArrayID);
-    glBindVertexArray(VertexArrayID);
+    initWindow();
 
     std::vector<unsigned short> indices;
     std::vector<float> vertexDatas = generateQuads(64, indices, WIDTH_MESH, HEIGHT_MESH);
-    std::cout << vertexDatas.size() << std::endl;
-    std::cout << indices.size() << std::endl;
 
-    GLuint vertexBuffer;
+    std::vector<GLuint> ids = bindBuffers(indices, vertexDatas);
 
-    glGenBuffers(1, &vertexBuffer);
-    glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
-    glBufferData(GL_ARRAY_BUFFER, WIDTH_MESH * HEIGHT_MESH *3 * sizeof(float), &vertexDatas[0], GL_STATIC_DRAW);
+    glm::mat4 MVP;
 
-    GLuint indexBuffer;
-    glGenBuffers(1, &indexBuffer);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned short), &indices[0], GL_STATIC_DRAW);
-
-
-
-    GLuint shaderID = LoadShaders("vertexS", "fragmentS");
-    GLuint matrixID = glGetUniformLocation(shaderID, "MVP");
-    glm::mat4 proj = glm::perspective(45.0f, 4.0f / 3.0f, 0.1f, 100.0f);
-
-    glm::mat4 view = glm::lookAt(
-        glm::vec3(14, 10, 3),
-        glm::vec3(10, 0, 0),
-        glm::vec3(0, 1, 0)
-        );
-
-    glm::mat4 mod = glm::mat4(1.0f);
-
-    glm::mat4 MVP = proj * view * mod;
+    Control ctrl(WINDOWS_WIDTH, WINDOWS_HEIGHT);
 
     do
-    {
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        glUseProgram(shaderID);
-        glUniformMatrix4fv(matrixID, 1, GL_FALSE, &MVP[0][0]);
-        glEnable(GL_PRIMITIVE_RESTART);
-        glPrimitiveRestartIndex(WIDTH_MESH *HEIGHT_MESH);
-        glEnableVertexAttribArray(0);
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-        glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer);
-        glVertexAttribPointer(
-            0,
-            3,
-            GL_FLOAT,
-            GL_FALSE,
-            0,
-            (void*)0
-            );  
-        //glDrawArrays(GL_TRIANGLE_STRIP, 0, vertexDatas.size() / 3);
-        glDrawElements(GL_TRIANGLE_STRIP, indices.size(), GL_UNSIGNED_SHORT, (void*)0);
-        glDisableVertexAttribArray(0);
-        glfwSwapBuffers(window);
-        glfwPollEvents();
+    {   
+        renderScene(ids, MVP, ctrl, indices);
     } while (glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS && glfwWindowShouldClose(window) == 0);
 
-    glDeleteBuffers(1, &vertexBuffer);
-    glDeleteProgram(shaderID);
+    glDeleteBuffers(1, &ids[1]);
+    glDeleteProgram(ids[3]);
 
     return 0;
 }
