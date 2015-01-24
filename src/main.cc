@@ -75,7 +75,7 @@ std::vector<GLuint> bindBuffers(const std::vector<unsigned short>& indices,
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned short), &indices[0], GL_STATIC_DRAW);
 
-    GLuint shaderID = LoadShaders("vertexS", "fragmentS");
+    GLuint shaderID = LoadShaders("../../src/vertexS", "../../src/fragmentS");
     GLuint matrixID = glGetUniformLocation(shaderID, "MVP");
     GLuint waveTimeID = glGetUniformLocation(shaderID, "waveTime");
     GLuint waveWidthID = glGetUniformLocation(shaderID, "waveWidth");
