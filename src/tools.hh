@@ -27,7 +27,7 @@ struct Vertex
         this->z = v.z;
         return *this;
     }
-    Vertex::Vertex(const Vertex& v) = default;
+    Vertex(const Vertex& v) = default;
 };
 
 class Control
