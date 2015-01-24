@@ -1,18 +1,59 @@
 #version 330 core
 
+#define NUM_OF_WAVES 4
+
+#define WATER_PLANE_LENGTH 128
+
+const float PI = 3.141592654;
+const float G = 9.81;
+const float overallSteepness = 1;
+
 uniform float waveTime;
 uniform float waveWidth;
 uniform float waveHeight;
-// Input vertex data, different for all executions of this shader.
+
 layout(location = 0) in vec3 v;
 
-// Values that stay constant for the whole mesh.
+uniform vec4 waveParams[NUM_OF_WAVES];
+uniform vec2 waveDirections[NUM_OF_WAVES];
+
 uniform mat4 MVP;
+
+float speeds[4] = {1,0.5,0.1,1.1};
+float amplitudes[4] = {0.05, 0.2, 0.02,0.5};
+float wavelengths[4] = {4, 3, 2, 1};
+
+vec2 direction;
 
 void main(){
 
 	// Output position of the vertex, in clip space : MVP * position
-    vec4 res = vec4(v.x,sin(waveWidth * v.x + waveTime) * cos(waveWidth * v.z + waveTime) * waveHeight,v.z,1);
+    vec3 P = v;
+    P.y = 0;
+    for (int i = 0; i < NUM_OF_WAVES; i++)
+	{
+        if (i == 1)
+		    direction = vec2(1,1);
+        if (i == 2)
+            direction = vec2(1,0);
+        if (i == 3)
+            direction = vec2(-0.1, -0.2);
+        if (i == 4)
+            direction = vec2(-0.2, -0.1);
+		float speed = speeds[i];
+		float amplitude = amplitudes[i];
+		float wavelength = wavelengths[i];
+		float steepness = overallSteepness / (wavelengths[i] * amplitudes[i] * 4);
+
+		float frequency = (2 * PI) / wavelength;//sqrt(G*2.0*PI/wavelength);
+		float phase = speed*frequency;
+		float alpha = frequency*dot(direction, v.xz)+phase*waveTime;
+		
+        P.x += steepness* amplitude*direction.x*cos(alpha);
+        P.y += amplitude * sin(dot(direction,v.xz) * frequency + waveTime * phase);
+        P.z += steepness* amplitude*direction.y*cos(alpha);
+	}
+    vec4 res = vec4(P,1);
 	gl_Position =  MVP * res;
 
 }

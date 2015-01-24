@@ -9,7 +9,7 @@ GLFWwindow* window;
 GLfloat waveTime = 0.5f;
 GLfloat waveWidth = 0.6f;
 GLfloat waveHeight = 1.0f;
-GLfloat waveFreq = 0.01f;
+GLfloat waveFreq = 0.001f;
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -20,21 +20,49 @@ GLfloat waveFreq = 0.01f;
 #include <vector>
 #include <iostream>
 #include "tools.hh"
+#include "Wave.hh"
 
-#define WIDTH_MESH 20
-#define HEIGHT_MESH 20
+#define WIDTH_MESH 100
+#define HEIGHT_MESH 100
 
 #define WINDOWS_WIDTH 1300
 #define WINDOWS_HEIGHT 700
 
+std::vector<WaveParams> getWavesParams(const std::vector<Wave>& waves)
+{
+    std::vector<WaveParams> res;
+    for (const auto& e : waves)
+        res.push_back(e.wp);
+    return res;
+}
 
+std::vector<WaveDirection> getWavesDirections(const std::vector<Wave>& waves)
+{
+    std::vector<WaveDirection> res;
+    for (const auto& e : waves)
+        res.push_back(e.wd);
+    return res;
+}
 
-std::vector<GLuint> bindBuffers(const std::vector<unsigned short>& indices, const std::vector<float>& vertexDatas)
+std::vector<Wave> generateWaves()
+{
+    std::vector<Wave> res;
+    
+    res.push_back(Wave(1.0f, 0.01f, 4.0f, 1.0f, 0.0f,1.0f));
+    res.push_back(Wave(0.5f, 0.02f, 3.0f, 1.0f, 0.0f, 0.0f));
+    res.push_back(Wave(0.1f, 0.015f, 2.0f, -0.1f, 0.0f, -0.2f));
+    res.push_back(Wave(1.1f, 0.008f, 1.0f, -0.2f, 0.f, -0.1f));
+
+    return res;
+}
+
+std::vector<GLuint> bindBuffers(const std::vector<unsigned short>& indices, 
+                                const std::vector<float>& vertexDatas,
+                                const std::vector<Wave>& waves)
 {
     GLuint VertexArrayID;
     glGenVertexArrays(1, &VertexArrayID);
     glBindVertexArray(VertexArrayID);
-
 
     GLuint vertexBuffer;
 
@@ -52,6 +80,8 @@ std::vector<GLuint> bindBuffers(const std::vector<unsigned short>& indices, cons
     GLuint waveTimeID = glGetUniformLocation(shaderID, "waveTime");
     GLuint waveWidthID = glGetUniformLocation(shaderID, "waveWidth");
     GLuint waveHeightID = glGetUniformLocation(shaderID, "waveHeight");
+    GLuint waveParamsID = glGetUniformLocation(shaderID, "waveParams");
+    GLuint waveDirectionID = glGetUniformLocation(shaderID, "waveDirection");
 
     std::vector<GLuint> res;
     res.push_back(VertexArrayID); // 0
@@ -62,7 +92,8 @@ std::vector<GLuint> bindBuffers(const std::vector<unsigned short>& indices, cons
     res.push_back(waveTimeID); // 5
     res.push_back(waveWidthID); // 6
     res.push_back(waveHeightID); // 7
-    
+    res.push_back(waveParamsID); // 8
+    res.push_back(waveDirectionID); // 9
     //Always this order
 
     return res;
@@ -115,20 +146,6 @@ std::vector<float> generateQuads(int number, std::vector<unsigned short>& indice
         z1 += 1.0f;
     }
     fillIndices(indices, width, height, vertexs.size());
-    for (unsigned int i = 0; i < indices.size(); ++i)
-    {
-        std::cout << indices[i] << "|";
-        if (indices[i] == height * width)
-            std::cout << std::endl;
-    }
-    std::cout << std::endl;
-    std::cout << " VERTICES " << std::endl;
-    for (unsigned int i = 0; i < vertexs.size(); ++i)
-    {
-        std::cout << vertexs[i].x <<  " " << vertexs[i].z << "    ";
-        if ((i + 1) % width == 0)
-            std::cout << std::endl;
-    }
     return convertToArray(vertexs);
 }
 
@@ -154,8 +171,14 @@ void initWindow()
     glClearColor(0, 0, 0, 0);
 }
 
-void renderScene(std::vector<GLuint> ids, glm::mat4& MVP, Control& ctrl, const std::vector<unsigned short>& indices)
+void renderScene(std::vector<GLuint> ids, 
+                 glm::mat4& MVP, Control& ctrl, 
+                 const std::vector<unsigned short>& indices,
+                 const std::vector<Wave>& waves)
 {
+
+    std::vector<WaveParams> wps = getWavesParams(waves);
+    std::vector<WaveDirection> wds = getWavesDirections(waves);
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glUseProgram(ids[3]);
@@ -166,6 +189,8 @@ void renderScene(std::vector<GLuint> ids, glm::mat4& MVP, Control& ctrl, const s
     glUniform1f(ids[5], waveTime);
     glUniform1f(ids[6], waveWidth);
     glUniform1f(ids[7], waveHeight);
+    glUniform4fv(ids[8], 4 * NUM_OF_WAVES, (GLfloat*)(&wps[0]));
+    glUniform2fv(ids[9], 2 * NUM_OF_WAVES, (GLfloat*)(&wds[0]));
 
     glEnable(GL_PRIMITIVE_RESTART);
     glPrimitiveRestartIndex(WIDTH_MESH *HEIGHT_MESH);
@@ -197,11 +222,11 @@ int main()
         return -1;
 
     initWindow();
-
+    std::vector<Wave> waves = generateWaves();
     std::vector<unsigned short> indices;
     std::vector<float> vertexDatas = generateQuads(64, indices, WIDTH_MESH, HEIGHT_MESH);
 
-    std::vector<GLuint> ids = bindBuffers(indices, vertexDatas);
+    std::vector<GLuint> ids = bindBuffers(indices, vertexDatas, waves);
 
     glm::mat4 MVP;
 
@@ -209,7 +234,7 @@ int main()
 
     do
     {   
-        renderScene(ids, MVP, ctrl, indices);
+        renderScene(ids, MVP, ctrl, indices, waves);
         waveTime += waveFreq;
     } while (glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS && glfwWindowShouldClose(window) == 0);
 
