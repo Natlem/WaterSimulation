@@ -11,12 +11,12 @@ void Control::computeMVP(bool debug)
 
     static double lastTime = glfwGetTime();
     double currentTime = glfwGetTime();
-    float deltaTime = float(currentTime - lastTime);
+    float deltaTime = static_cast<float>(currentTime - lastTime);
 
     glfwSetCursorPos(window, widthPixel / 2, heightPixel / 2);
 
-    horizontalAngle += mouseSpeed * float(widthPixel / 2 - mousePosX);
-    verticalAngle += mouseSpeed * float(heightPixel / 2 - mousePosY);
+    horizontalAngle += mouseSpeed * static_cast<float>(widthPixel / 2 - mousePosX);
+    verticalAngle += mouseSpeed * static_cast<float>(heightPixel / 2 - mousePosY);
 
     glm::vec3 direction(
         cos(verticalAngle) * sin(horizontalAngle),
