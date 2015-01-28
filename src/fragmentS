@@ -1,7 +1,15 @@
 #version 330 core
 
+uniform vec3 lightPos;
+uniform vec3 lightColor;
+
 // Ouput data
 out vec3 color;
+
+vec4 ambientM;
+vec4 diffuse;
+vec4 specular;
+
 
 void main()
 {

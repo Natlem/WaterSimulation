@@ -16,13 +16,17 @@ uniform float waveDirection[NUMBER_OF_WAVES * 2];
 uniform float wavePlaneLength;
 uniform float waveCenter[2];
 layout(location = 0) in vec3 v;
+layout(location = 1) in vec3 vertexN;
 
 uniform mat4 MVP;
+uniform mat4 M;
+uniform mat4 V;
+uniform mat4 P;
 
 vec2 direction;
 vec2 center = vec2(waveCenter[0],waveCenter[1]);
 
-void directionalWave(in vec3 P, out vec4 res)
+void directionalWave(in vec3 P, out vec4 res, out vec3 N)
 {
     P.y = 0;
     float speed = 0;
@@ -45,11 +49,18 @@ void directionalWave(in vec3 P, out vec4 res)
         P.x += steepness* amplitude*direction.x*cos(alpha);
         P.y += amplitude * sin(dot(direction,v.xz) * frequency + waveTime * phase);
         P.z += steepness* amplitude*direction.y*cos(alpha);
+
+        N.x += direction.x * wavelength * amplitude * cos(alpha);
+        N.y += steepness * wavelength * amplitude * sin(alpha);
+        N.z += direction.y * wavelength * amplitude * cos(alpha);
 	}
+    N.x = 0 - N.x;
+    N.y = 1 - N.y;
+    N.z = 0 - N.z;
     res = vec4(P,1);
 }
 
-void circularWave(in vec3 P, out vec4 res)
+void circularWave(in vec3 P, out vec4 res, out vec3 N)
 {
     P.y = 0;
     float speed = 0;
@@ -73,7 +84,14 @@ void circularWave(in vec3 P, out vec4 res)
         P.x += steepness* amplitude*direction.x*cos(alpha);
         P.y += amplitude * sin(dot(direction,v.xz) * frequency + waveTime * phase);
         P.z += steepness* amplitude*direction.y*cos(alpha);
+	    
+        N.x += direction.x * wavelength * amplitude * cos(alpha);
+        N.y += steepness * wavelength * amplitude * sin(alpha);
+        N.z += direction.y * wavelength * amplitude * cos(alpha);
 	}
+    N.x = 0 - N.x;
+    N.y = 1 - N.y;
+    N.z = 0 - N.z;
     res = vec4(P,1);
 }
 
@@ -93,12 +111,13 @@ void ripple(out vec4 res)
     res = vec4(v.x, y, v.z,1);
 }
 
-void splash(in vec3 P,out vec4 res)
+void splash(in vec3 P,out vec4 res, out vec3 N)
 {
     vec2 posT = P.xz - center;
     float r = sqrt(posT.x * posT.x + posT.y * posT.y);
     P.y = sin(r * waveTime) / r + 2;
     res = vec4(P.x, P.y, P.z, 1);
+    N = normalize(gl_NormalMatrix * gl_Normal)
 }
 
 void main(){
@@ -106,7 +125,9 @@ void main(){
 	// Output position of the vertex, in clip space : MVP * position
     vec3 P = v;
     vec4 res;
-    circularWave(P, res);
+    vec4 N;
+    directionalWave(P,res,N)
+    //circularWave(P, res);
     //splash(P,res);
     
 	gl_Position =  MVP * res;

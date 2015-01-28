@@ -117,6 +117,9 @@ std::vector<GLuint> bindBuffers(const std::vector<unsigned short>& indices,
     GLuint waveDirectionID = glGetUniformLocation(shaderID, "waveDirection");
     GLuint wavePlaneLengthID = glGetUniformLocation(shaderID, "wavePlaneLength");
     GLuint waveCenter = glGetUniformLocation(shaderID, "waveCenter");
+    GLuint MID = glGetUniformLocation(shaderID, "M");
+    GLuint VID = glGetUniformLocation(shaderID, "V");
+    GLuint PID = glGetUniformLocation(shaderID, "P");
 
     std::vector<GLuint> res;
     res.push_back(VertexArrayID); // 0
@@ -133,6 +136,9 @@ std::vector<GLuint> bindBuffers(const std::vector<unsigned short>& indices,
     res.push_back(waveDirectionID); // 11
     res.push_back(wavePlaneLengthID); // 12
     res.push_back(waveCenter); // 13
+    res.push_back(MID); // 14
+    res.push_back(VID); // 15
+    res.push_back(PID); // 16
 
 
     //Always this order
@@ -228,6 +234,9 @@ void renderScene(std::vector<GLuint> ids,
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glUseProgram(ids[3]);
     MVP = ctrl.getMVP();
+    glm::mat4 M = ctrl.getModMatrix();
+    glm::mat4 V = ctrl.getViewMatrix();
+    glm::mat4 P = ctrl.getProjMatrix();
     ctrl.computeMVP();
 
     std::vector<float> speeds = getWavesSpeeds(waves);
@@ -246,6 +255,9 @@ void renderScene(std::vector<GLuint> ids,
     glUniform1fv(ids[11], static_cast<int>(waveD.size()), &waveD[0]);
     glUniform1f(ids[12], g_water_plane_length);
     glUniform1fv(ids[13], 2, &center[0]);
+    glUniformMatrix4fv(ids[14], 1, GL_FALSE, &M[0][0]);
+    glUniformMatrix4fv(ids[15], 1, GL_FALSE, &V[0][0]);
+    glUniformMatrix4fv(ids[16], 1, GL_FALSE, &P[0][0]);
 
     glEnable(GL_PRIMITIVE_RESTART);
     glPrimitiveRestartIndex(WIDTH_MESH *HEIGHT_MESH);
