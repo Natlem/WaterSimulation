@@ -120,6 +120,8 @@ std::vector<GLuint> bindBuffers(const std::vector<unsigned short>& indices,
     GLuint MID = glGetUniformLocation(shaderID, "M");
     GLuint VID = glGetUniformLocation(shaderID, "V");
     GLuint PID = glGetUniformLocation(shaderID, "P");
+    GLuint lightPosID = glGetUniformLocation(shaderID, "lightPos");
+    GLuint lightColorID = glGetUniformLocation(shaderID, "lightColor");
 
     std::vector<GLuint> res;
     res.push_back(VertexArrayID); // 0
@@ -139,6 +141,8 @@ std::vector<GLuint> bindBuffers(const std::vector<unsigned short>& indices,
     res.push_back(MID); // 14
     res.push_back(VID); // 15
     res.push_back(PID); // 16
+    res.push_back(lightPosID); // 17
+    res.push_back(lightColorID); // 18
 
 
     //Always this order
@@ -258,6 +262,13 @@ void renderScene(std::vector<GLuint> ids,
     glUniformMatrix4fv(ids[14], 1, GL_FALSE, &M[0][0]);
     glUniformMatrix4fv(ids[15], 1, GL_FALSE, &V[0][0]);
     glUniformMatrix4fv(ids[16], 1, GL_FALSE, &P[0][0]);
+
+    //LIGHT Pos
+    glUniform3f(ids[17], 0, 10, 0);
+
+    //LIGHT Color
+    glUniform3f(ids[18], 1, 1, 1);
+
 
     glEnable(GL_PRIMITIVE_RESTART);
     glPrimitiveRestartIndex(WIDTH_MESH *HEIGHT_MESH);

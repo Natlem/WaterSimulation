@@ -6,15 +6,35 @@ uniform vec3 lightColor;
 // Ouput data
 out vec3 color;
 
-vec4 ambientM;
-vec4 diffuse;
+vec4 ambientM = vec4 (0.2, 0.2, 0.2, 0.2);;
+vec4 diffuse = vec4 (0.9, 0.9, 0.9, 0.9);
 vec4 specular;
 
+float ambientC = 0.2;
+float diffuseC = 0.5;
+float specularC = 0.7;
+
+int shininessC = 1;
+
+in vec3 normal;
+in vec3 cameraVertex;
 
 void main()
 {
+    // N = Normal
+    vec3 N = normalize(normal);
+    // L = Light direction
+    vec3 L = normalize(lightPos - cameraVertex);
+    // V = view ray
+    vec3 V = normalize(vec3(0,0,0) - cameraVertex);
+    // R = reflection vector
+    vec3 R = normalize(-reflect(L,N));
 
-	// Output color = red 
-	color = vec3(0,0,1);
+    float diff = diffuseC * dot(N,L);
+    float spec = specularC * pow(dot(V,R), shininessC);
+    float r = (lightColor.x * 0) * (diff + ambientC) + spec;
+    float g = (lightColor.y * 0.34) * (diff + ambientC) + spec;
+    float b = (lightColor.z * 0.74) * (diff + ambientC) + spec;
+	color = vec3(r,g,b);
 
 }
