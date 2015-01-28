@@ -8,7 +8,7 @@ uniform vec3 cameraPos;
 // Ouput data
 out vec3 color;
 
-vec4 ambientM = vec4 (0.2, 0.2, 0.2, 0.2);;
+vec4 ambientM = vec4 (0.2, 0.2, 0.2, 0.2);
 vec4 diffuse = vec4 (0.9, 0.9, 0.9, 0.9);
 vec4 specular;
 
