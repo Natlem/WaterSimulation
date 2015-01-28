@@ -1,6 +1,6 @@
 #include "shader.hh"
 
-GLuint LoadCompileLinkShader2(std::string vertexPathSrc, std::string fragmentPathSrc)
+GLuint LoadCompileLinkShader(std::string vertexPathSrc, std::string fragmentPathSrc)
 {
     GLuint vertexShaderID = glCreateShader(GL_VERTEX_SHADER);
     std::string vertexSrc;
