@@ -15,7 +15,6 @@ cd bin
 Summary:
 A very basic ocean/water simulation basing.
 There are 3 types of waves : Directional, circular and ripple.
-For more detail, you can read the pdf in doc/
 There also some phong shading and camera control.
 
 Problems:
