@@ -22,43 +22,74 @@ GLfloat waveFreq = 0.001f;
 #include "tools.hh"
 #include "Wave.hh"
 
-#define WIDTH_MESH 100
-#define HEIGHT_MESH 100
+#define WIDTH_MESH 20
+#define HEIGHT_MESH 20
 
 #define WINDOWS_WIDTH 1300
 #define WINDOWS_HEIGHT 700
 
-std::vector<WaveParams> getWavesParams(const std::vector<Wave>& waves)
+const float g_water_plane_length = 128.0f;
+
+std::vector<float> getWavesSpeeds(const std::vector<Wave>& waves)
 {
-    std::vector<WaveParams> res;
+    std::vector<float> res;
     for (const auto& e : waves)
-        res.push_back(e.wp);
+        res.push_back(e.wp.speed);
     return res;
 }
 
-std::vector<WaveDirection> getWavesDirections(const std::vector<Wave>& waves)
+std::vector<float> getWavesAmplitude(const std::vector<Wave>& waves)
 {
-    std::vector<WaveDirection> res;
+    std::vector<float> res;
     for (const auto& e : waves)
-        res.push_back(e.wd);
+        res.push_back(e.wp.amplitude);
     return res;
 }
+
+std::vector<float> getWavesWaveLength(const std::vector<Wave>& waves)
+{
+    std::vector<float> res;
+    for (const auto& e : waves)
+        res.push_back(e.wp.waveLength);
+    return res;
+}
+
+std::vector<float> getWavesSteepness(const std::vector<Wave>& waves)
+{
+    std::vector<float> res;
+    for (const auto& e : waves)
+        res.push_back(e.wp.steepness);
+    return res;
+}
+
+std::vector<float> getWavesDirections(const std::vector<Wave>& waves)
+{
+    std::vector<float> res;
+    for (const auto& e : waves)
+    {
+        res.push_back(e.wd.x);
+        res.push_back(e.wd.z);
+    }
+    return res;
+}
+
 
 std::vector<Wave> generateWaves()
 {
     std::vector<Wave> res;
     
-    res.push_back(Wave(1.0f, 0.01f, 4.0f, 1.0f, 0.0f,1.0f));
-    res.push_back(Wave(0.5f, 0.02f, 3.0f, 1.0f, 0.0f, 0.0f));
-    res.push_back(Wave(0.1f, 0.015f, 2.0f, -0.1f, 0.0f, -0.2f));
-    res.push_back(Wave(1.1f, 0.008f, 1.0f, -0.2f, 0.f, -0.1f));
+    res.push_back(Wave(1.0f, 0.05f, 4.0f, 1.0f, 0.0f,1.0f));
+    res.push_back(Wave(0.5f, 0.2f, 3.0f, 1.0f, 0.0f, 0.0f));
+    res.push_back(Wave(0.1f, 0.02f, 2.0f, -0.1f, 0.0f, -0.2f));
+    res.push_back(Wave(1.1f, 0.5f, 1.0f, -0.2f, 0.f, -0.1f));
 
     return res;
 }
 
+
+
 std::vector<GLuint> bindBuffers(const std::vector<unsigned short>& indices, 
-                                const std::vector<float>& vertexDatas,
-                                const std::vector<Wave>& waves)
+                                const std::vector<float>& vertexDatas)
 {
     GLuint VertexArrayID;
     glGenVertexArrays(1, &VertexArrayID);
@@ -78,10 +109,14 @@ std::vector<GLuint> bindBuffers(const std::vector<unsigned short>& indices,
     GLuint shaderID = LoadShaders("../../src/vertexS", "../../src/fragmentS");
     GLuint matrixID = glGetUniformLocation(shaderID, "MVP");
     GLuint waveTimeID = glGetUniformLocation(shaderID, "waveTime");
-    GLuint waveWidthID = glGetUniformLocation(shaderID, "waveWidth");
-    GLuint waveHeightID = glGetUniformLocation(shaderID, "waveHeight");
-    GLuint waveParamsID = glGetUniformLocation(shaderID, "waveParams");
+    GLuint waveNumberID = glGetUniformLocation(shaderID, "waveNumbers");
+    GLuint waveSpeedID = glGetUniformLocation(shaderID, "waveSpeeds");
+    GLuint waveAmpID = glGetUniformLocation(shaderID, "waveAmplitudes");
+    GLuint waveLengthID = glGetUniformLocation(shaderID, "waveLengths");
+    GLuint waveSteepID = glGetUniformLocation(shaderID, "waveSteepnesss");
     GLuint waveDirectionID = glGetUniformLocation(shaderID, "waveDirection");
+    GLuint wavePlaneLengthID = glGetUniformLocation(shaderID, "wavePlaneLength");
+    GLuint waveCenter = glGetUniformLocation(shaderID, "waveCenter");
 
     std::vector<GLuint> res;
     res.push_back(VertexArrayID); // 0
@@ -90,10 +125,16 @@ std::vector<GLuint> bindBuffers(const std::vector<unsigned short>& indices,
     res.push_back(shaderID); // 3
     res.push_back(matrixID); // 4
     res.push_back(waveTimeID); // 5
-    res.push_back(waveWidthID); // 6
-    res.push_back(waveHeightID); // 7
-    res.push_back(waveParamsID); // 8
-    res.push_back(waveDirectionID); // 9
+    res.push_back(waveNumberID); // 6
+    res.push_back(waveSpeedID); // 7
+    res.push_back(waveAmpID); // 8
+    res.push_back(waveLengthID); // 9
+    res.push_back(waveSteepID); // 10
+    res.push_back(waveDirectionID); // 11
+    res.push_back(wavePlaneLengthID); // 12
+    res.push_back(waveCenter); // 13
+
+
     //Always this order
 
     return res;
@@ -126,7 +167,7 @@ void fillIndices(std::vector<unsigned short>& v, int width, int height, size_t s
     }
 }
 
-std::vector<float> generateQuads(int number, std::vector<unsigned short>& indices, int width, int height)
+std::vector<float> generateQuads(int number, std::vector<unsigned short>& indices, int width, int height, std::vector<float>& p)
 {
     std::vector<Vertex> vertexs;
     float startX = 0.0f;
@@ -134,18 +175,21 @@ std::vector<float> generateQuads(int number, std::vector<unsigned short>& indice
     float x1 = -1.0f;
     float y1 = 0.0f;
     float z1 = 0.0f;
+    float step = 1.0f;
 
     for (int i = 0; i < height; ++i)
     {
         for (int j = 0; j < width; ++j)
         {
-            x1 += 1.0f;
+            x1 += step;
             vertexs.push_back(Vertex(x1,y1,z1));
         }
-        x1 = -1.0f;
-        z1 += 1.0f;
+        x1 = 0 - step;
+        z1 += step;
     }
     fillIndices(indices, width, height, vertexs.size());
+    p.push_back(((width - 1) * step) / 2);
+    p.push_back(((height - 1) * step) / 2);
     return convertToArray(vertexs);
 }
 
@@ -175,23 +219,33 @@ void initWindow()
 void renderScene(std::vector<GLuint> ids, 
                  glm::mat4& MVP, Control& ctrl, 
                  const std::vector<unsigned short>& indices,
-                 const std::vector<Wave>& waves)
+                 const std::vector<Wave>& waves, const std::vector<float>& center)
 {
 
-    std::vector<WaveParams> wps = getWavesParams(waves);
-    std::vector<WaveDirection> wds = getWavesDirections(waves);
+    //std::vector<WaveParams> wps = getWavesParams(waves);
+    //std::vector<WaveDirection> wds = getWavesDirections(waves);
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glUseProgram(ids[3]);
     MVP = ctrl.getMVP();
     ctrl.computeMVP();
 
+    std::vector<float> speeds = getWavesSpeeds(waves);
+    std::vector<float> amps = getWavesAmplitude(waves);
+    std::vector<float> waveL = getWavesWaveLength(waves);
+    std::vector<float> waveS = getWavesSteepness(waves);
+    std::vector<float> waveD = getWavesDirections(waves);
+
     glUniformMatrix4fv(ids[4], 1, GL_FALSE, &MVP[0][0]);
     glUniform1f(ids[5], waveTime);
-    glUniform1f(ids[6], waveWidth);
-    glUniform1f(ids[7], waveHeight);
-    glUniform4fv(ids[8], 4 * NUM_OF_WAVES, (GLfloat*)(&wps[0]));
-    glUniform2fv(ids[9], 2 * NUM_OF_WAVES, (GLfloat*)(&wds[0]));
+    glUniform1f(ids[6], static_cast<float>(waves.size()));
+    glUniform1fv(ids[7], static_cast<int>(waves.size()), &speeds[0]);
+    glUniform1fv(ids[8], static_cast<int>(waves.size()), &amps[0]);
+    glUniform1fv(ids[9], static_cast<int>(waves.size()), &waveL[0]);
+    glUniform1fv(ids[10], static_cast<int>(waves.size()), &waveS[0]);
+    glUniform1fv(ids[11], static_cast<int>(waveD.size()), &waveD[0]);
+    glUniform1f(ids[12], g_water_plane_length);
+    glUniform1fv(ids[13], 2, &center[0]);
 
     glEnable(GL_PRIMITIVE_RESTART);
     glPrimitiveRestartIndex(WIDTH_MESH *HEIGHT_MESH);
@@ -225,9 +279,10 @@ int main()
     initWindow();
     std::vector<Wave> waves = generateWaves();
     std::vector<unsigned short> indices;
-    std::vector<float> vertexDatas = generateQuads(64, indices, WIDTH_MESH, HEIGHT_MESH);
+    std::vector<float> center;
+    std::vector<float> vertexDatas = generateQuads(64, indices, WIDTH_MESH, HEIGHT_MESH, center);
 
-    std::vector<GLuint> ids = bindBuffers(indices, vertexDatas, waves);
+    std::vector<GLuint> ids = bindBuffers(indices, vertexDatas);
 
     glm::mat4 MVP;
 
@@ -235,7 +290,7 @@ int main()
 
     do
     {   
-        renderScene(ids, MVP, ctrl, indices, waves);
+        renderScene(ids, MVP, ctrl, indices, waves,center);
         waveTime += waveFreq;
     } while (glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS && glfwWindowShouldClose(window) == 0);
 
