@@ -22,13 +22,97 @@ GLfloat waveFreq = 0.001f;
 #include "tools.hh"
 #include "Wave.hh"
 
-#define WIDTH_MESH 20
-#define HEIGHT_MESH 20
+#define WIDTH_MESH 100
+#define HEIGHT_MESH 100
 
 #define WINDOWS_WIDTH 1300
 #define WINDOWS_HEIGHT 700
 
 const float g_water_plane_length = 128.0f;
+
+void optionParser(bool& mesh, int& wave, int argc, char** argv)
+{
+    if (argc > 3)
+    {
+        std::cout << " Usage : ./syn mode typeOfWave" << std::endl;
+        std::cout << " The option parser is really basic, do no try anything tricky" << std::endl;
+        std::cout << " There are 3 types of waves" << std::endl;
+        std::cout << " By defaut, mesh is enabled" << std::endl;
+        std::cout << " Example displaying only mesh : ./syn mesh 1" << std::endl;
+        std::cout << " Example display using color : ./syn nomesh 1" << std::endl;
+        std::cout << " Example displaying only mesh : ./syn 1" << std::endl;
+        exit(1);
+    }
+    if (argc == 3)
+    {
+        std::string argv1 = argv[1];
+        std::string argv2 = argv[2];
+        if (argv1 == "mesh")
+            mesh = true;
+        else if (argv1 == "nomesh")
+            mesh = false;
+        else
+        {
+            std::cout << " Usage : ./syn mode typeOfWave" << std::endl;
+            std::cout << " The option parser is really basic, do no try anything tricky" << std::endl;
+            std::cout << " There are 3 types of waves" << std::endl;
+            std::cout << " By defaut, mesh is enabled" << std::endl;
+            std::cout << " Example displaying only mesh : ./syn mesh 1" << std::endl;
+            std::cout << " Example display using color : ./syn nomesh 1" << std::endl;
+            std::cout << " Example displaying only mesh : ./syn 1" << std::endl;
+            exit(1);
+        }
+        if (argv2 == "1")
+            wave = 1;
+        else if (argv2 == "2")
+            wave = 2;
+        else if (argv2 == "3")
+            wave = 3;
+        else
+        {
+            std::cout << " Usage : ./syn mode typeOfWave" << std::endl;
+            std::cout << " The option parser is really basic, do no try anything tricky" << std::endl;
+            std::cout << " There are 3 types of waves" << std::endl;
+            std::cout << " By defaut, mesh is enabled" << std::endl;
+            std::cout << " Example displaying only mesh : ./syn mesh 1" << std::endl;
+            std::cout << " Example display using color : ./syn nomesh 1" << std::endl;
+            std::cout << " Example displaying only mesh : ./syn 1" << std::endl;
+            exit(1);
+        }
+    }
+    if (argc == 2)
+    {
+        std::string argv2 = argv[1];
+        if (argv2 == "1")
+            wave = 1;
+        else if (argv2 == "2")
+            wave = 2;
+        else if (argv2 == "3")
+            wave = 3;
+        else
+        {
+            std::cout << " Usage : ./syn mode typeOfWave" << std::endl;
+            std::cout << " The option parser is really basic, do no try anything tricky" << std::endl;
+            std::cout << " There are 3 types of waves" << std::endl;
+            std::cout << " By defaut, mesh is enabled" << std::endl;
+            std::cout << " Example displaying only mesh : ./syn mesh 1" << std::endl;
+            std::cout << " Example display using color : ./syn nomesh 1" << std::endl;
+            std::cout << " Example displaying only mesh : ./syn 1" << std::endl;
+            exit(1);
+        }
+    }
+    if (argc == 1)
+    {
+            std::cout << " Usage : ./syn mode typeOfWave" << std::endl;
+            std::cout << " The option parser is really basic, do no try anything tricky" << std::endl;
+            std::cout << " There are 3 types of waves" << std::endl;
+            std::cout << " By defaut, mesh is enabled" << std::endl;
+            std::cout << " Example displaying only mesh : ./syn mesh 1" << std::endl;
+            std::cout << " Example display using color : ./syn nomesh 1" << std::endl;
+            std::cout << " Example displaying only mesh : ./syn 1" << std::endl;
+            exit(1);
+    }
+}
 
 std::vector<float> getWavesSpeeds(const std::vector<Wave>& waves)
 {
@@ -122,6 +206,8 @@ std::vector<GLuint> bindBuffers(const std::vector<unsigned short>& indices,
     GLuint PID = glGetUniformLocation(shaderID, "P");
     GLuint lightPosID = glGetUniformLocation(shaderID, "lightPos");
     GLuint lightColorID = glGetUniformLocation(shaderID, "lightColor");
+    GLuint cameraPosId = glGetUniformLocation(shaderID, "cameraPos");
+    GLuint typeofWaveID = glGetUniformLocation(shaderID, "typeOfWave");
 
     std::vector<GLuint> res;
     res.push_back(VertexArrayID); // 0
@@ -143,6 +229,8 @@ std::vector<GLuint> bindBuffers(const std::vector<unsigned short>& indices,
     res.push_back(PID); // 16
     res.push_back(lightPosID); // 17
     res.push_back(lightColorID); // 18
+    res.push_back(cameraPosId); // 19
+    res.push_back(typeofWaveID); // 20
 
 
     //Always this order
@@ -229,7 +317,8 @@ void initWindow()
 void renderScene(std::vector<GLuint> ids, 
                  glm::mat4& MVP, Control& ctrl, 
                  const std::vector<unsigned short>& indices,
-                 const std::vector<Wave>& waves, const std::vector<float>& center)
+                 const std::vector<Wave>& waves, const std::vector<float>& center,
+                 const bool& mesh, const int typeOfWave)
 {
 
     //std::vector<WaveParams> wps = getWavesParams(waves);
@@ -264,16 +353,22 @@ void renderScene(std::vector<GLuint> ids,
     glUniformMatrix4fv(ids[16], 1, GL_FALSE, &P[0][0]);
 
     //LIGHT Pos
-    glUniform3f(ids[17], 0, 10, 0);
+    glUniform3f(ids[17], center[0], 50, center[1]);
 
     //LIGHT Color
     glUniform3f(ids[18], 1, 1, 1);
+
+    //Camera Pos
+    glUniform3f(ids[19], ctrl.position.x, ctrl.position.y, ctrl.position.z);
+
+    glUniform1i(ids[20], typeOfWave);
 
 
     glEnable(GL_PRIMITIVE_RESTART);
     glPrimitiveRestartIndex(WIDTH_MESH *HEIGHT_MESH);
     glEnableVertexAttribArray(0);
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    if (mesh)
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     glBindBuffer(GL_ARRAY_BUFFER, ids[1]);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ids[2]);
     glVertexAttribPointer(
@@ -291,13 +386,18 @@ void renderScene(std::vector<GLuint> ids,
     glfwPollEvents();
 }
 
-int main()
+int main(int argc, char** argv)
 {
     // TODO : Generate vertex in generate(),
     // Draw the mesh
 
     if (!glfwInit())
         return -1;
+
+    bool meshM = true;
+    int typeOfWave = 1;
+
+    optionParser(meshM, typeOfWave, argc, argv);
 
     initWindow();
     std::vector<Wave> waves = generateWaves();
@@ -313,11 +413,12 @@ int main()
 
     do
     {   
-        renderScene(ids, MVP, ctrl, indices, waves,center);
+        renderScene(ids, MVP, ctrl, indices, waves,center, meshM, typeOfWave);
         waveTime += waveFreq;
     } while (glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS && glfwWindowShouldClose(window) == 0);
 
     glDeleteBuffers(1, &ids[1]);
+    glDeleteBuffers(1, &ids[2]);
     glDeleteProgram(ids[3]);
     
     return 0;

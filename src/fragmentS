@@ -2,6 +2,8 @@
 
 uniform vec3 lightPos;
 uniform vec3 lightColor;
+uniform vec3 cameraPos;
+
 
 // Ouput data
 out vec3 color;
@@ -18,6 +20,7 @@ int shininessC = 1;
 
 in vec3 normal;
 in vec3 cameraVertex;
+in mat4 mvMat;
 
 void main()
 {
@@ -26,7 +29,7 @@ void main()
     // L = Light direction
     vec3 L = normalize(lightPos - cameraVertex);
     // V = view ray
-    vec3 V = normalize(vec3(0,0,0) - cameraVertex);
+    vec3 V = normalize(cameraPos - cameraVertex);
     // R = reflection vector
     vec3 R = normalize(-reflect(L,N));
 

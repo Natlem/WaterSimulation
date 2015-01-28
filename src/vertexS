@@ -15,6 +15,7 @@ uniform float waveSteepnesss[NUMBER_OF_WAVES];
 uniform float waveDirection[NUMBER_OF_WAVES * 2];
 uniform float wavePlaneLength;
 uniform float waveCenter[2];
+uniform int typeOfWave;
 layout(location = 0) in vec3 v;
 layout(location = 1) in vec3 vertexN;
 
@@ -28,6 +29,7 @@ vec2 center = vec2(waveCenter[0],waveCenter[1]);
 
 out vec3 normal;
 out vec3 cameraVertex;
+out mat4 mvMat;
 
 void directionalWave(in vec3 P, out vec4 res, out vec3 N)
 {
@@ -98,7 +100,7 @@ void circularWave(in vec3 P, out vec4 res, out vec3 N)
     res = vec4(P,1);
 }
 
-void ripple(out vec4 res)
+void ripple(out vec4 res,out vec3 N)
 {
     vec2 diff = v.xz - center;
     float lengthDiff = length(diff);
@@ -112,15 +114,16 @@ void ripple(out vec4 res)
     float factor = 1.0 - (cos(((2 * PI) * waveTime / 40)) + 1.0) / 2.0;    
     y += waveH * factor;
     res = vec4(v.x, y, v.z,1);
+    N =  (V * M * vec4(res.xyz, 0)).xyz;
 }
 
 void splash(in vec3 P,out vec4 res, out vec3 N)
 {
     vec2 posT = P.xz - center;
     float r = sqrt(posT.x * posT.x + posT.y * posT.y);
-    P.y = sin(r * waveTime) / r + 2;
+    P.y = sin(r * waveTime) / r + 4;
     res = vec4(P.x, P.y, P.z, 1);
-    N =  (V * M * vec4(vertexN, 0)).xyz;
+    N =  (V * M * vec4(res.xyz, 0)).xyz;
 }
 
 void main()
@@ -130,11 +133,16 @@ void main()
     vec3 P = v;
     vec4 res;
     vec3 N;
-    directionalWave(P,res,N);
-    //circularWave(P, res);
-    //splash(P,res);
+    if (typeOfWave == 1)
+        directionalWave(P,res,N);
+    else if (typeOfWave == 2)
+        circularWave(P, res, N);
+    else if (typeOfWave == 3)
+        splash(P,res,N);
     
 	gl_Position =  MVP * res;
     normal = N;
-    cameraVertex =  (V * M * res).xyz;
+    // Camera space or world space ?
+    cameraVertex =  ( M * res).xyz;
+    mvMat = V * M;
 }
