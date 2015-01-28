@@ -22,8 +22,8 @@ GLfloat waveFreq = 0.001f;
 #include "tools.hh"
 #include "Wave.hh"
 
-#define WIDTH_MESH 100
-#define HEIGHT_MESH 100
+#define WIDTH_MESH 40
+#define HEIGHT_MESH 40
 
 #define WINDOWS_WIDTH 1300
 #define WINDOWS_HEIGHT 700
@@ -410,7 +410,8 @@ int main(int argc, char** argv)
     glm::mat4 MVP;
 
     Control ctrl(WINDOWS_WIDTH, WINDOWS_HEIGHT);
-
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     do
     {   
         renderScene(ids, MVP, ctrl, indices, waves,center, meshM, typeOfWave);
