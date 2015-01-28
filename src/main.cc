@@ -9,21 +9,21 @@ GLFWwindow* window;
 GLfloat waveTime = 0.5f;
 GLfloat waveWidth = 0.6f;
 GLfloat waveHeight = 1.0f;
-GLfloat waveFreq = 0.001f;
+GLfloat waveFreq = 0.003f;
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-#include "shader.hpp"
+#include "shader.hh"
 
 //C++
 #include <vector>
 #include <iostream>
-#include "tools.hh"
+#include "control.hh"
 #include "Wave.hh"
 
-#define WIDTH_MESH 40
-#define HEIGHT_MESH 40
+#define WIDTH_MESH 100
+#define HEIGHT_MESH 100
 
 #define WINDOWS_WIDTH 1300
 #define WINDOWS_HEIGHT 700
@@ -190,7 +190,8 @@ std::vector<GLuint> bindBuffers(const std::vector<unsigned short>& indices,
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned short), &indices[0], GL_STATIC_DRAW);
 
-    GLuint shaderID = LoadShaders("../../src/vertexS", "../../src/fragmentS");
+    //GLuint shaderID = LoadShaders("../../src/vertexS", "../../src/fragmentS");
+    GLuint shaderID = LoadCompileLinkShader2("../../src/vertexS", "../../src/fragmentS");
     GLuint matrixID = glGetUniformLocation(shaderID, "MVP");
     GLuint waveTimeID = glGetUniformLocation(shaderID, "waveTime");
     GLuint waveNumberID = glGetUniformLocation(shaderID, "waveNumbers");

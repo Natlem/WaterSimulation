@@ -50,11 +50,11 @@ class Control
                     glm::vec3(0, 1, 0)
                     );
         glm::mat4 mod = glm::mat4(1.0f);
-        // Initial horizontal angle : toward -Z
+
         float horizontalAngle = 3.14f;
-        // Initial vertical angle : none
+
         float verticalAngle = 3.14f;
-        // Initial Field of View
+
         float initialFoV = 45.0f;
 
         float speed = 3.0f; // 3 units / second
