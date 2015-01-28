@@ -2,7 +2,7 @@
 
 extern GLFWwindow* window;
 
-void Control::computeMVP()
+void Control::computeMVP(bool debug)
 {
     float FoV = initialFoV;
     double mousePosX = 0;
@@ -48,7 +48,12 @@ void Control::computeMVP()
         position -= right * deltaTime * speed;
     }
 
-
+    if (debug)
+    {
+        std::cout << "M pos :" << mousePosX << " " << mousePosY << std::endl;
+        std::cout << "Angle V - H : " << verticalAngle << " " << horizontalAngle << std::endl;
+        std::cout << "position : " << position.x << " " << position.y << " " << position.z << std::endl; 
+    }
     proj = glm::perspective(FoV, 4.0f / 3.0f, 0.1f, 100.0f);
 
     view = glm::lookAt(

@@ -7,6 +7,8 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
+#include <iostream>
+
 struct Vertex
 {
     float x;
@@ -34,7 +36,7 @@ class Control
 {
     public:
         Control(int widthPixel, int heightPixel) : widthPixel(widthPixel), heightPixel(heightPixel){};
-        void computeMVP();
+        void computeMVP(bool debug = false);
         glm::mat4 getProjMatrix();
         glm::mat4 getViewMatrix();
         glm::mat4 getModMatrix();
