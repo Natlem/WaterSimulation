@@ -6,7 +6,7 @@ find_package(OpenGL REQUIRED)
 
 if (UNIX AND NOT APPLE)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
-endif (UNIX)
+endif (UNIX AND NOT APPLE)
 
 if (UNIX)
     set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
@@ -43,12 +43,9 @@ file(
 )
 
 include_directories(
-	external/AntTweakBar-1.16/include/
 	external/glfw-3.0.3/include/GLFW/
 	external/glm-0.9.4.0/
 	external/glew-1.9.0/include/
-	external/assimp-3.0.1270/include/
-	external/bullet-2.81-rev2613/src/
 	.
 )
 
