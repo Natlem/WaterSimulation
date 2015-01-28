@@ -26,6 +26,9 @@ uniform mat4 P;
 vec2 direction;
 vec2 center = vec2(waveCenter[0],waveCenter[1]);
 
+out vec3 normal;
+out vec3 cameraVertex;
+
 void directionalWave(in vec3 P, out vec4 res, out vec3 N)
 {
     P.y = 0;
@@ -117,9 +120,11 @@ void splash(in vec3 P,out vec4 res, out vec3 N)
     float r = sqrt(posT.x * posT.x + posT.y * posT.y);
     P.y = sin(r * waveTime) / r + 2;
     res = vec4(P.x, P.y, P.z, 1);
+    N =  (V * M * vec4(vertexN, 0)).xyz;
 }
 
-void main(){
+void main()
+{
 
 	// Output position of the vertex, in clip space : MVP * position
     vec3 P = v;
@@ -130,5 +135,6 @@ void main(){
     //splash(P,res);
     
 	gl_Position =  MVP * res;
-
+    normal = N;
+    cameraVertex =  (V * M * res).xyz;
 }
