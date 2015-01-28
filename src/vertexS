@@ -117,7 +117,6 @@ void splash(in vec3 P,out vec4 res, out vec3 N)
     float r = sqrt(posT.x * posT.x + posT.y * posT.y);
     P.y = sin(r * waveTime) / r + 2;
     res = vec4(P.x, P.y, P.z, 1);
-    N = normalize(gl_NormalMatrix * gl_Normal)
 }
 
 void main(){
@@ -125,8 +124,8 @@ void main(){
 	// Output position of the vertex, in clip space : MVP * position
     vec3 P = v;
     vec4 res;
-    vec4 N;
-    directionalWave(P,res,N)
+    vec3 N;
+    directionalWave(P,res,N);
     //circularWave(P, res);
     //splash(P,res);
     
