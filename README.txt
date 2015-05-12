@@ -13,7 +13,7 @@ cd bin
 ./syn mesh 1
 
 Summary:
-A very basic ocean/water simulation basing.
+A very basic ocean/water simulation based on GPU GEMS Chapter 1.
 There are 3 types of waves : Directional, circular and ripple.
 There also some phong shading and camera control.
 
